@@ -1,23 +1,42 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends
-from fastapi.params import Path, Query
-
+from fastapi import APIRouter, Depends, UploadFile
+from fastapi.params import Path, File, Form
+from pathlib import Path as FilePath
+from fastapi.responses import FileResponse
 from redis_tools import RedisTools
 from src.auth import User
 from src.auth.config import current_active_user
 from src.exceptions import NoPermissionsException
 from src.products.dao import ProductDAO
-from src.products.schemas import ProductCreate, ProductResponse
+from src.products.schemas import ProductResponse
 
 router = APIRouter(
     prefix='/products',
     tags=['products']
 )
 
+UPLOAD_FOLDER = FilePath('images')
 
-@router.post('/')
-async def create_product(product: ProductCreate, user: User = Depends(current_active_user)):
-    new_product = await ProductDAO.add(product.title, product.price, product.amount, product.description, seller_id=user.id)
+@router.post('/', status_code=201, response_model=ProductResponse)
+async def create_product(
+        file: Annotated[UploadFile, File(description='An image for your product')],
+        title: Annotated[str, Form()],
+        price: Annotated[int, Form(ge=0)],
+        amount: Annotated[int, Form(ge=0)],
+        description: Annotated[str, Form()],
+        user: User = Depends(current_active_user)
+):
+    new_product = await ProductDAO.add(title, price, amount, description, user.id)
+    if file.filename == 'image/jpeg':
+        filetype = 'jpg'
+    elif file.filename == 'image/png':
+        filetype = 'png'
+    else:
+        return 'this is not pic'  # make exc
+    file_location = UPLOAD_FOLDER / f'{new_product['id']}.{filetype}'
+    with open(file_location, "wb") as file_object:
+        content = await file.read()
+        file_object.write(content)
     return new_product
 
 
@@ -36,12 +55,23 @@ async def get_product(product_id: Annotated[int, Path()]):
     return product
 
 
+@router.get('/image/{product_id}')
+def get_product_image(product_id: Annotated[int, Path()]):
+    file_location = UPLOAD_FOLDER / f'{product_id}.png'
+    if file_location.exists():
+        return FileResponse(file_location)
+    file_location = UPLOAD_FOLDER / f'{product_id}.jpg'
+    if file_location.exists():
+        return FileResponse(file_location)
+    return 'wtf'  # make exc
+
+
 @router.patch('/{product_id}/')
 async def edit_product(
         product_id: Annotated[int, Path()],
-        price: Annotated[int, Query()] = None,
-        amount: Annotated[int, Query()] = None,
-        description: Annotated[str, Query()] = None,
+        price: Annotated[int, Form()] = None,
+        amount: Annotated[int, Form()] = None,
+        description: Annotated[str, Form()] = None,
         user: User = Depends(current_active_user)
 ):
     product = await ProductDAO.find_one_or_none(id=product_id)

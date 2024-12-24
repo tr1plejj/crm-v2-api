@@ -1,7 +1,6 @@
 import uvicorn
 from fastapi import Depends, FastAPI
 from starlette.middleware.cors import CORSMiddleware
-
 from src.auth import User
 from src.auth.config import fastapi_users, auth_backend, current_active_user
 from src.auth.schemas import UserRead, UserCreate, UserUpdate

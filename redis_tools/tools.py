@@ -4,7 +4,7 @@ from redis import Redis
 
 class RedisTools:
 
-    redis_conn = Redis(host='redis', port=6379)
+    redis_conn = Redis()  # host='redis', port=6379
 
     @classmethod
     def set_product(cls, product_id: int, product_obj: dict):
