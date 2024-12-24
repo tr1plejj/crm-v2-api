@@ -9,6 +9,7 @@ from src.auth.config import current_active_user
 from src.exceptions import NoPermissionsException
 from src.products.dao import ProductDAO
 from src.products.schemas import ProductResponse
+from .exceptions import ImageNotFoundException, NotAPictureException
 
 router = APIRouter(
     prefix='/products',
@@ -32,7 +33,7 @@ async def create_product(
     elif file.filename == 'image/png':
         filetype = 'png'
     else:
-        return 'this is not pic'  # make exc
+        raise NotAPictureException
     file_location = UPLOAD_FOLDER / f'{new_product['id']}.{filetype}'
     with open(file_location, "wb") as file_object:
         content = await file.read()
@@ -63,7 +64,7 @@ def get_product_image(product_id: Annotated[int, Path()]):
     file_location = UPLOAD_FOLDER / f'{product_id}.jpg'
     if file_location.exists():
         return FileResponse(file_location)
-    return 'wtf'  # make exc
+    raise ImageNotFoundException
 
 
 @router.patch('/{product_id}/')
@@ -99,7 +100,7 @@ async def edit_product(
 
 @router.delete('/{product_id}/')
 async def delete_product(product_id: Annotated[int, Path()], user: User = Depends(current_active_user)):
-    deleted_product = await ProductDAO.delete(product_id=product_id, user_id=user.id)
-    return deleted_product
+    await ProductDAO.delete(product_id=product_id, user_id=user.id)
+    return {'data': f'product {product_id} deleted successfully'}
 
 

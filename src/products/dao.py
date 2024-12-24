@@ -1,7 +1,7 @@
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import update, delete
 from src.dao import BaseDAO
-from src.exceptions import NoPermissionsException
+from src.exceptions import NoPermissionsException, NotFoundException
 from src.products import Product
 from src.database import async_session
 
@@ -57,6 +57,13 @@ class ProductDAO(BaseDAO):
 
     @classmethod
     async def delete(cls, product_id: int, user_id: int):
+        """
+        Deletes the product.
+
+        :param product_id: Id of product
+        :param user_id: Id of user
+        :return: Nothing.
+        """
         async with async_session() as session:
             async with session.begin():
                 stmt = (
@@ -66,6 +73,7 @@ class ProductDAO(BaseDAO):
                 )
                 deleted_product = await session.execute(stmt)
                 deleted_product = deleted_product.scalar()
+                if deleted_product is None:
+                    raise NotFoundException
                 if deleted_product.seller_id != user_id:
                     raise NoPermissionsException
-                return deleted_product # does not work
