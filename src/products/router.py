@@ -28,9 +28,9 @@ async def create_product(
         user: User = Depends(current_active_user)
 ):
     new_product = await ProductDAO.add(title, price, amount, description, user.id)
-    if file.filename == 'image/jpeg':
+    if file.content_type == 'image/jpeg':
         filetype = 'jpg'
-    elif file.filename == 'image/png':
+    elif file.content_type == 'image/png':
         filetype = 'png'
     else:
         raise NotAPictureException
