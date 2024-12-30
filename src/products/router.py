@@ -47,7 +47,7 @@ async def list_products():
     return products
 
 
-@router.get('/{product_id}/', response_model=ProductResponse)
+@router.get('/{product_id}', response_model=ProductResponse)
 async def get_product(product_id: Annotated[int, Path()]):
     product = RedisTools.get_product(product_id=product_id)
     if not product:
@@ -57,7 +57,7 @@ async def get_product(product_id: Annotated[int, Path()]):
 
 
 @router.get('/image/{product_id}')
-def get_product_image(product_id: Annotated[int, Path()]):
+def get_product_image(product_id: Annotated[int, Path()]): # -> make path returning instead of image itself
     file_location = UPLOAD_FOLDER / f'{product_id}.png'
     if file_location.exists():
         return FileResponse(file_location)
@@ -67,7 +67,7 @@ def get_product_image(product_id: Annotated[int, Path()]):
     raise ImageNotFoundException
 
 
-@router.patch('/{product_id}/')
+@router.patch('/{product_id}')
 async def edit_product(
         product_id: Annotated[int, Path()],
         price: Annotated[int, Form()] = None,
@@ -98,7 +98,7 @@ async def edit_product(
     return {'changed_product_id': changed_product_id}
 
 
-@router.delete('/{product_id}/')
+@router.delete('/{product_id}')
 async def delete_product(product_id: Annotated[int, Path()], user: User = Depends(current_active_user)):
     await ProductDAO.delete(product_id=product_id, user_id=user.id)
     return {'data': f'product {product_id} deleted successfully'}

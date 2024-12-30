@@ -1,20 +1,28 @@
+from contextlib import asynccontextmanager
 import uvicorn
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from src.auth import User
-from src.auth.config import fastapi_users, auth_backend, current_active_user
+from src.auth.config import fastapi_users, auth_backend
 from src.auth.schemas import UserRead, UserCreate, UserUpdate
+from src.tasks.connection import Settings
 from src.products import products_router
 from src.orders import orders_router
+from src.tasks import event_router
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    settings = Settings()
+    await settings.initialize_database()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Разрешить запросы с любых источников. Можете ограничить список доменов
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Разрешить все методы (GET, POST, PUT, DELETE и т.д.)
-    allow_headers=["*"],  # Разрешить все заголовки
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(
@@ -46,11 +54,9 @@ app.include_router(
 app.include_router(
     orders_router
 )
-
-
-@app.get("/authenticated-route")
-async def authenticated_route(user: User = Depends(current_active_user)):
-    return {"message": f"Hello {user.email}!"}
+app.include_router(
+    event_router
+)
 
 
 if __name__ == '__main__':

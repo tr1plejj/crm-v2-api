@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 
-@router.post('/create/', response_model=OrderResponse, status_code=201)
+@router.post('/create', response_model=OrderResponse, status_code=201)
 async def create_order(order: OrderCreate):
     new_order = await OrderDAO.create(
         buyer_id=order.buyer_id,
@@ -33,13 +33,13 @@ async def list_orders():
     return orders
 
 
-@router.delete('/{order_id}/')
+@router.delete('/{order_id}')
 async def delete_order(order_id: Annotated[int, Path()], user: User = Depends(current_active_user)):
     deleted_order = await OrderDAO.remove(order_id=order_id, seller_id=user.id)
     return deleted_order
 
 
-@router.get('/{order_id}/', response_model=OrderResponse)
+@router.get('/{order_id}', response_model=OrderResponse)
 async def get_order(order_id: Annotated[int, Path()]):
     order = RedisTools.get_order(order_id=order_id)
     if not order:
