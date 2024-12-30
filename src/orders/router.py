@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 
-@router.post('/create', response_model=OrderResponse, status_code=201)
+@router.post('/', response_model=OrderResponse, status_code=201)
 async def create_order(order: OrderCreate):
     new_order = await OrderDAO.create(
         buyer_id=order.buyer_id,
