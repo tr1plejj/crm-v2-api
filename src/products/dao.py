@@ -14,7 +14,7 @@ class ProductDAO(BaseDAO):
     model = Product
 
     @classmethod
-    async def add(cls, title: str, price: int, amount: int, description: str, seller_id: int) -> Product:
+    async def add(cls, title: str, price: int, amount: int, description: str, image: str, seller_id: int) -> Product:
         """
         Adds product to database.
 
@@ -22,6 +22,7 @@ class ProductDAO(BaseDAO):
         :param price: Price of product.
         :param amount: Amount of product.
         :param description: Description of product.
+        :param image: Path to image of product.
         :param seller_id: Id of user who sells it.
         :return: Nothing.
         """
@@ -29,7 +30,7 @@ class ProductDAO(BaseDAO):
         async with async_session() as session:
             async with session.begin():
                 new_product = Product(title=title, price=price, amount=amount,
-                                    description=description, seller_id=seller_id)
+                                    description=description, image=image, seller_id=seller_id)
                 session.add(new_product)
                 await session.flush()
                 return jsonable_encoder(new_product)

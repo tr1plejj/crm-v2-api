@@ -22,6 +22,9 @@ class Product(Base):
     description: Mapped[str] = mapped_column(
         Text, nullable=False
     )
+    image: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
     seller_id: Mapped[int] = mapped_column(
         Integer, ForeignKey('user.id'), nullable=False  # add greater than or equal 0
     )
